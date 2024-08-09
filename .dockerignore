@@ -1,0 +1,17 @@
+# Ignore git-related stuff
+.git/
+
+# Ignore python cache
+__pycache__/
+*.pyc
+
+# Ignore ide-related stuff
+.idea/
+.vscode/
+
+# Ignore python virtual environment
+venv/
+env/
+
+# Ignore Moon Cloud credential test file
+credential.json

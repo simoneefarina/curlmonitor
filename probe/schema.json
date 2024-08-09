@@ -1,0 +1,13 @@
+{
+    "type": "object",
+    "properties": {
+        "config": {
+            "type": "object",
+            "properties":{
+                "target":{
+                    "type":"string"
+                }
+            }
+        }
+    }
+}
