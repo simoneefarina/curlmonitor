@@ -11,7 +11,7 @@ __pycache__/
 
 # Ignore python virtual environment
 venv/
-env/
+.env
 
 # Ignore Moon Cloud credential test file
 credential.json

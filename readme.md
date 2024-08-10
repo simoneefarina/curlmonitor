@@ -6,7 +6,7 @@ Simple probe that checks if an url exists using curl.
 ```json5
 {
     config:{
-        host:"test.com"
+        target:"test.com"
     }
 }
 ```

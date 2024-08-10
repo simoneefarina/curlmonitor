@@ -3,6 +3,7 @@ import json
 #imports
 import subprocess
 import typing
+import validators
 from mooncloud_driver import abstract_probe,atom,result,entrypoint
 
 class Probe(abstract_probe.AbstractProbe):
@@ -46,7 +47,10 @@ class Probe(abstract_probe.AbstractProbe):
     # Checks the input are valid
     def check_input(self, inputs: None) -> bool :
         target = self.config.input ['config'] ['target']
-        assert target is not None and target != "", "Input error: specify the target"
+
+        #Check if the target is not empty and valid
+        assert target is not None and target != "", "The target host is not specified"
+        assert validators.url(target) is not False, "The target host is invalid or malformed"
 
         self.target = target
 
@@ -74,7 +78,7 @@ class Probe(abstract_probe.AbstractProbe):
 
         #Input errors
         if self.sp_returncode == 1 or self.sp_returncode == 3:
-            result_int = 3
+            result_int = 4
 
         #Connection errors
         elif self.sp_returncode == 6 or self.sp_returncode == 7 or self.sp_returncode == 22 or self.sp_returncode == 28:
@@ -96,9 +100,27 @@ class Probe(abstract_probe.AbstractProbe):
 
         return True
 
+    #Create input error
+    def assertionErrorInput(self, e) :
+
+        result_map = self.RESULT_MAP.get(4)
+        result_map['base_extra_data']['Error'] = str(e)
+
+        return result.Result (
+            integer_result = 4,
+            pretty_result = result_map['pretty_result'],
+            base_extra_data = result_map['base_extra_data']
+        )
+
     def atoms(self) -> typing.Sequence[atom.AtomPairWithException]:
         return [
-            atom.AtomPairWithException(self.check_input),
+            atom.AtomPairWithException(forward=self.check_input, forward_captured_exceptions=[
+                atom.PunctualExceptionInformationForward(
+                    exception_class=AssertionError,
+                    action=atom.OnExceptionActionForward.STOP,
+                    result_producer=self.assertionErrorInput
+                )
+            ]),
             atom.AtomPairWithException(self.execute_command),
             atom.AtomPairWithException(self.set_output)
         ]
