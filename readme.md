@@ -1,12 +1,12 @@
 # Probe_Name
-Simple probe that checks if an url exists using curl.
+Probe that perform HTTP requests and handle response codes with detailed result reporting.
 
 ## Input
 
 ```json5
 {
     config:{
-        target:"test.com"
+        target:"https://google.com"
     }
 }
 ```
