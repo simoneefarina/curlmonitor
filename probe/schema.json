@@ -5,9 +5,12 @@
             "type": "object",
             "properties":{
                 "target":{
-                    "type":"string"
+                    "type":"string",
+                    "format": "uri"
                 }
-            }
+            },
+            "required": ["target"]
         }
-    }
+    },
+    "required": ["config"]
 }
