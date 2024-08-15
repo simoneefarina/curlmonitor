@@ -54,49 +54,71 @@ class Probe(abstract_probe.AbstractProbe):
     def execute_request(self, inputs: None) -> bool:
         target = self.target
 
-        try:
-            response = request.urlopen(target, timeout=10)
-            self.result_code = response.getcode()
-        except HTTPError as e:
-            self.result_code = e.code
-            self.error = str(e)
-        except URLError as e:
-            self.result_code = result.INTEGER_RESULT_TARGET_CONNECTION_ERROR
-            self.error = str(e.reason)
-        except Exception as e:
-            self.result_code = result.INTEGER_RESULT_MOON_CLOUD_ERROR
-            self.error = str(e)
+        request.urlopen(target, timeout=10)
 
         return True
 
-    # Create the result
-    def create_result(self, inputs: None) -> result:
+    # Create the result in case of success
+    def request_success(self, inputs: None) -> result:
+        result_success = self.build_result(result.INTEGER_RESULT_TRUE)
 
-        if self.result_code == result.INTEGER_RESULT_TARGET_CONNECTION_ERROR:
-            result_integer = result.INTEGER_RESULT_TARGET_CONNECTION_ERROR
-        elif self.result_code == result.INTEGER_RESULT_MOON_CLOUD_ERROR:
-            result_integer = result.INTEGER_RESULT_MOON_CLOUD_ERROR
-        elif self.result_code != 200:
+        self.result.integer_result = result_success.integer_result
+        self.result.pretty_result = result_success.pretty_result
+        self.result.base_extra_data = result_success.base_extra_data
+
+        return True
+
+    # Create the result in case of an error
+    def request_error(self, e):
+        error = ""
+
+        if isinstance(e, HTTPError):
             result_integer = result.INTEGER_RESULT_FALSE
+            error = str(e)
+        elif isinstance(e, URLError):
+            result_integer = result.INTEGER_RESULT_TARGET_CONNECTION_ERROR
+            error = str(e.reason)
         else:
-            result_integer = result.INTEGER_RESULT_TRUE
+            result_integer = result.INTEGER_RESULT_MOON_CLOUD_ERROR
+            error = str(e)
 
-        result_obj = self.RESULT_MAP.get(result_integer)
+        return self.build_result(result_integer, error)
+
+    # Build the result
+    def build_result(self, result_code: int, error: str = "") -> result.Result:
+        result_obj = self.RESULT_MAP.get(result_code)
         base_extra_data = copy.deepcopy(result_obj['base_extra_data'])
-        if result_integer != result.INTEGER_RESULT_TRUE:
-            base_extra_data['error'] = base_extra_data['error'].format(e=self.error)
 
-        self.result.integer_result = result_integer
-        self.result.pretty_result = result_obj['pretty_result']
-        self.result.base_extra_data = base_extra_data
+        if 'error' in base_extra_data:
+            base_extra_data['error'] = base_extra_data['error'].format(e=error)
 
-        return True
+        return result.Result(
+            integer_result=result_code,
+            pretty_result=result_obj['pretty_result'],
+            base_extra_data=base_extra_data
+        )
 
     def atoms(self) -> typing.Sequence[atom.AtomPairWithException]:
         return [
             atom.AtomPairWithException(self.set_input),
-            atom.AtomPairWithException(self.execute_request),
-            atom.AtomPairWithException(self.create_result)
+            atom.AtomPairWithException(forward=self.execute_request, forward_captured_exceptions=[
+                atom.PunctualExceptionInformationForward(
+                    exception_class=HTTPError,
+                    action=atom.OnExceptionActionForward.STOP,
+                    result_producer=self.request_error
+                ),
+                atom.PunctualExceptionInformationForward(
+                    exception_class=URLError,
+                    action=atom.OnExceptionActionForward.STOP,
+                    result_producer=self.request_error
+                ),
+                atom.PunctualExceptionInformationForward(
+                    exception_class=Exception,
+                    action=atom.OnExceptionActionForward.STOP,
+                    result_producer=self.request_error
+                ),
+            ]),
+            atom.AtomPairWithException(self.request_success)
         ]
 
 
