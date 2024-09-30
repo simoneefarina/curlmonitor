@@ -59,7 +59,7 @@ class Probe(abstract_probe.AbstractProbe):
         return True
 
     # Create the result in case of success
-    def request_success(self, inputs: None) -> result:
+    def request_success(self, inputs: None) -> bool:
         result_success = self.build_result(result.INTEGER_RESULT_TRUE)
 
         self.result.integer_result = result_success.integer_result
