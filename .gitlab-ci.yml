@@ -22,4 +22,5 @@ test_probe:
   stage: test
   image: quay.io/podman/stable:latest
   script:
+    - podman pull $CONTAINER_RELEASE_IMAGE
     - podman run $CONTAINER_RELEASE_IMAGE pytest
