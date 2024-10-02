@@ -1,1 +1,5 @@
-{}
+{
+  "config": {
+    "target": "https://google.com.kni.jpp"
+  }
+}

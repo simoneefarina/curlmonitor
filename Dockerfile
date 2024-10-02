@@ -12,8 +12,7 @@ RUN sed -i -e 's/git+https:\/\/repository.v2.moon-cloud.eu\/dev\/driver.git/git+
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-ADD probe/schema.json /etc/probe/schema.json
-ADD probe/probe.py /usr/src/app
+ADD . /usr/src/app
 
 ENTRYPOINT ["/bin/bash", "-c"]
 CMD ["python /usr/src/app/probe/probe.py"]
